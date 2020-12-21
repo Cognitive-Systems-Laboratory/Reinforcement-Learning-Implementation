@@ -1,26 +1,14 @@
 # Implementation of Reinforcement Learning Algorithm 
-PyTorch를 기반한 Reinforcement Learning (RL) 알고리즘 튜토리얼
+Algorithm tutorial based on Pytorch
 
 ## Project Structure
-본 프로젝트의 구조는 moemen95's GitHub [Pytorch-Project-Template](https://github.com/moemen95/Pytorch-Project-Template)를 기반으로 작성되어 있습니다. 
+The project's template is built based on moemen95's GitHub [Pytorch-Project-Template](https://github.com/moemen95/Pytorch-Project-Template)
 ```
-├── agents
-|  └── dqn.py # the main training agent for the dqn
-├── graphs
-|  └── models
-|  |  └── dqn.py
-|  |  └── actor-crtic.py
-|  |  └── REINFORCE.py
-|  |  └── ....
-|  └── losses
-|  |  └── huber_loss.py # contains huber loss definition
-├── datasets  # contains all dataloaders for the project
-├── utils # utilities folder containing input extraction, replay memory, config parsing, etc
-|  └── assets
-|  └── replay_memory.py
-|  └── env_utils.py
-├── main.py
-└── run.sh
+├─agents
+├─configs
+├─datasets
+├─models
+└─utils
 ```
 
 ![](https://github.com/moemen95/Pytorch-Project-Template/raw/master/utils/assets/class_diagram.png)
@@ -28,9 +16,8 @@ PyTorch를 기반한 Reinforcement Learning (RL) 알고리즘 튜토리얼
 ---
 
 ## Environments
-아래와 같은 환경에서만 테스트하였습니다. 환경은 추후 추가될 예정입니다.
+The environements were tested on following environments. More Environments are planned in future
 - CartPole
-- GridWorld
 - ...
 
 ---
