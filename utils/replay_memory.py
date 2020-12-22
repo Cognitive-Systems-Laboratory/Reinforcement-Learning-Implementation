@@ -1,31 +1,29 @@
-"""
-Replay Memory class
-Adapted from: https://pytorch.org/tutorials/intermediate/reinforcement_q_learning.html
-date: 1st of June 2018
-"""
+import collections
 import random
-from collections import namedtuple
+import torch
 
-Transition = namedtuple('Transition', ('state', 'action', 'next_state', 'reward'))
+class ReplayBuffer():
+    def __init__(self, buffer_limit):
+        self.buffer = collections.deque(maxlen=buffer_limit)
 
+    def put(self, transition):
+        self.buffer.append(transition)
 
-class ReplayMemory(object):
-    def __init__(self, config):
-        self.config = config
+    def sample(self, n):
+        mini_batch = random.sample(self.buffer, n)
+        s_lst, a_lst, r_lst, s_prime_lst, done_mask_lst = [], [], [], [], []
 
-        self.capacity = self.config.memory_capacity
-        self.memory = []
-        self.position = 0
+        for transition in mini_batch:
+            s, a, r, s_prime, done_mask = transition
+            s_lst.append(s)
+            a_lst.append([a])
+            r_lst.append([r])
+            s_prime_lst.append(s_prime)
+            done_mask_lst.append([done_mask])
 
-    def length(self):
-        return len(self.memory)
+        return torch.tensor(s_lst, dtype=torch.float), torch.tensor(a_lst), \
+               torch.tensor(r_lst), torch.tensor(s_prime_lst, dtype=torch.float), \
+               torch.tensor(done_mask_lst)
 
-    def push_transition(self, *args):
-        if self.length() < self.capacity:
-            self.memory.append(None)
-        self.memory[self.position] = Transition(*args)
-        self.position = (self.position + 1) % self.capacity  # for the cyclic buffer
-
-    def sample_batch(self, batch_size):
-        batch = random.sample(self.memory, batch_size)
-        return batch
+    def size(self):
+        return len(self.buffer)
