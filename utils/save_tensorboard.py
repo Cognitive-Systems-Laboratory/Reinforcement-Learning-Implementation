@@ -8,7 +8,7 @@ def mk_directory(root,mode='DQN'):
     try:
         os.makedirs(sub_path)
     except:
-        print("hi")
+        print("Path Already Exists")
     path=os.path.join(root,mode,"%02d" %(len(os.listdir(sub_path))))
     os.makedirs(path) #Create Exp Folder
     return path

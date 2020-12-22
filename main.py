@@ -12,7 +12,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from utils.replay_memory import ReplayBuffer
+from utils.save_tensorboard import *
 from models.dqn import Qnet
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--device', default='cpu', choices=['cpu','cuda'])
@@ -40,7 +42,7 @@ min_mem_size = config['min_mem_size']
 
 def main():
     env = gym.make('CartPole-v1')
-
+    Summary_Writer=mk_SummaryWriter("experiments",'DQN')
     q = Qnet().to(device)
     q_target = Qnet().to(device)
     q_target.load_state_dict(q.state_dict())
@@ -86,9 +88,15 @@ def main():
         if n_epi % print_interval == 0 and n_epi != 0:
             q_target.load_state_dict(q.state_dict())
             print(f"[Episode {n_epi:5d}] Score: {score / print_interval:6.2f} | Max score: {max_score / print_interval:6.2f} | Buffer size: {memory.size():5d} | Epsilon: {epsilon * 100:2.1f}%")
+            add_scalar("Score",score/print_interval,n_epi,Summary_Writer)
+            add_scalar("Max Score",max_score/print_interval,n_epi,Summary_Writer)
+            add_scalar("Buffer Size",memory.size() /print_interval,n_epi,Summary_Writer)
+            add_scalar("Epsilon",epsilon ,n_epi,Summary_Writer)
             score = 0.0
 
+
     env.close()
+    Summary_Writer.close()
 
 
 if __name__ == '__main__':
