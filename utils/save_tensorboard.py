@@ -15,7 +15,7 @@ def mk_directory(root,mode='DQN'):
     num=0
 
     path=os.path.join(root,mode,file_name+'_'+str(num))
-    while os.path.exist(path):
+    while os.path.exists(path):
         num +=1
         path=os.path.join(root,mode,file_name+'_'+str(num))
 
