@@ -47,7 +47,7 @@ def get_screen(env):
     # 크기를 수정하고 배치 차원(BCHW)을 추가하십시오.
     return resize(screen)
 
-def make_video(env, model):
+def make_video(env, model,device):
     try:
         os.makedirs(os.path.join(os.getcwd(), "videos"))
     except:
@@ -58,7 +58,7 @@ def make_video(env, model):
     done = False
     observation = env.reset()
     while not done:
-        action = model.sample_action(torch.tensor(observation).unsqueeze(0).float(), 0)
+        action = model.sample_action(torch.tensor(observation).unsqueeze(0).float().to(device), 0)
         observation, reward, done, _ = env.step(action)
         steps += 1
         rewards += reward

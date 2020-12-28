@@ -98,7 +98,7 @@ def main():
 
     env.close()
     Summary_Writer.close()
-    make_video(env,q)
+    make_video(env,q,device)
 
 if __name__ == '__main__':
     main()
