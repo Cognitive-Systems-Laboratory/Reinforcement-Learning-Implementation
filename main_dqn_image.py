@@ -16,6 +16,10 @@ from utils.save_tensorboard import *
 from models.dqn_image import DQN as Qnet
 import cv2
 import numpy as np
+import torchvision.transforms as T
+from utils.env_utils import get_screen
+
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--device', default='cpu', choices=['cpu','cuda'])
@@ -69,24 +73,25 @@ def main():
         epsilon = max(0.01, 0.08 - 0.01 * (n_epi / 200))  # Linear annealing from 8% to 1%
         s = env.reset()
         s=env.render(mode='rgb_array')
-        s=preprocess(s)
+
+        s=get_screen(env)
         done = False
         
         #Use the Preprocessed Image: Simple Resizing and use the history
-        height,width=100,150
+        height,width=40,90
         history_initial=torch.zeros(4,height,width)
-        history_initial=torch.cat((s.unsqueeze(0),history_initial[1:4]),0) 
+        history_initial=torch.cat((s,history_initial[1:4]),0) 
         
         
         while not done:
-            a = q.sample_action(history_initial.float().to(device).unsqueeze(0), epsilon)
+            a = q.sample_action(history_initial.unsqueeze(0).to(device), epsilon)
 
             s_prime, r, done, info = env.step(a)
 
             s_image=env.render(mode='rgb_array')
             #Use the Preprocess Image: Simple Resizing and Use Its's history
-            s_image=preprocess(s_image)
-            history_new=torch.cat((s_image.unsqueeze(0),history_initial[1:4]),0)    
+            s_image=get_screen(env)
+            history_new=torch.cat((s_image,history_initial[1:4]),0)    
 
             done_mask = 0.0 if done else 1.0
             memory.put((history_initial, a, r / 100.0, history_new, done_mask))
