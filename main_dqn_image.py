@@ -13,16 +13,25 @@ import torch.nn.functional as F
 import torch.optim as optim
 from utils.replay_memory import ReplayBuffer
 from utils.save_tensorboard import *
-from models.dqn import Qnet
-
+from models.dqn_image import DQN as Qnet
+import cv2
+import numpy as np
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--device', default='cpu', choices=['cpu','cuda'])
 parser.add_argument('--config', default='configs/dqn.json')
 args = parser.parse_args()
 
-# Device
 
+def preprocess( screen):
+    preprocessed= cv2.resize(screen, (150,100),interpolation = cv2.INTER_CUBIC)  # 60 * 40 로 변경
+    preprocessed = np.dot(preprocessed[..., :3], [0.299, 0.587, 0.114])  # Gray scale 로 변경
+    # preprocessed: np.array = preprocessed.transpose((2, 0, 1))  # (C, W, H) 로 변경
+    preprocessed = preprocessed.astype('float32') / 255.
+
+    return torch.tensor(preprocessed)
+
+# Device
 if args.device == 'cpu':
     device = torch.device('cpu')
 elif args.device == 'cuda':
@@ -41,6 +50,8 @@ batch_size = config['batch_size']
 n_episodes = config['n_episodes']
 min_mem_size = config['min_mem_size']
 
+
+
 def main():
     env = gym.make('CartPole-v1')
     Summary_Writer=mk_SummaryWriter("experiments",'DQN')
@@ -58,12 +69,23 @@ def main():
         epsilon = max(0.01, 0.08 - 0.01 * (n_epi / 200))  # Linear annealing from 8% to 1%
         s = env.reset()
         done = False
-
+        height,width=100,150
+        history_initial=torch.zeros(4,height,width)
         while not done:
-            a = q.sample_action(torch.from_numpy(s).float().to(device), epsilon)
+            a = q.sample_action(history_initial.float().to(device).unsqueeze(0), epsilon)
+
             s_prime, r, done, info = env.step(a)
+
+            s_image=env.render(mode='rgb_array')
+
+            s_image=preprocess( s_image)
+            history_new=torch.cat((s_image.unsqueeze(0),history_initial[1:4]),0)    
+            
+            
+
             done_mask = 0.0 if done else 1.0
-            memory.put((s, a, r / 100.0, s_prime, done_mask))
+            memory.put((history_initial, a, r / 100.0, history_new, done_mask))
+            history_initial=history_new
             s = s_prime
             score += r
             if done:
@@ -73,7 +95,7 @@ def main():
 
         if memory.size() > min_mem_size:
             for i in range(10):
-                s, a, r, s_prime, done_mask = memory.sample(batch_size)
+                s, a, r, s_prime, done_mask = memory.sample_b(batch_size)
 
                 q_out = q(s)
                 q_a = q_out.gather(1, a)
@@ -98,7 +120,6 @@ def main():
 
     env.close()
     Summary_Writer.close()
-
 
 if __name__ == '__main__':
     main()

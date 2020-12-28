@@ -13,8 +13,18 @@ import torch.nn.functional as F
 import torch.optim as optim
 from utils.replay_memory import ReplayBuffer
 from utils.save_tensorboard import *
-from models.dqn import Qnet
+from models.dqn import Qnet_history as Qnet
+import cv2
+import numpy as np
 
+
+def preprocess( screen):
+    preprocessed= cv2.resize(screen, (150,100),interpolation = cv2.INTER_CUBIC)  # 60 * 40 로 변경
+    preprocessed = np.dot(preprocessed[..., :3], [0.299, 0.587, 0.114])  # Gray scale 로 변경
+    # preprocessed: np.array = preprocessed.transpose((2, 0, 1))  # (C, W, H) 로 변경
+    preprocessed = preprocessed.astype('float32') / 255.
+
+    return torch.tensor(preprocessed)
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--device', default='cpu', choices=['cpu','cuda'])
@@ -40,6 +50,8 @@ batch_size = config['batch_size']
 n_episodes = config['n_episodes']
 min_mem_size = config['min_mem_size']
 
+
+
 def main():
     env = gym.make('CartPole-v1')
     Summary_Writer=mk_SummaryWriter("experiments",'DQN')
@@ -57,13 +69,17 @@ def main():
         epsilon = max(0.01, 0.08 - 0.01 * (n_epi / 200))  # Linear annealing from 8% to 1%
         s = env.reset()
         done = False
-
+        history_initial=np.zeros(16,)
+        
+        history_initial=np.concatenate((s, history_initial[0:12]))
         while not done:
-            a = q.sample_action(torch.from_numpy(s).float().to(device), epsilon)
+            a = q.sample_action(torch.from_numpy(history_initial).float().to(device), epsilon)
             s_prime, r, done, info = env.step(a)
+            history_new=np.concatenate((s_prime, history_initial[0:12]))
             done_mask = 0.0 if done else 1.0
-            memory.put((s, a, r / 100.0, s_prime, done_mask))
+            memory.put((history_initial, a, r / 100.0, history_new, done_mask))
             s = s_prime
+            history_initial=history_new
             score += r
             if done:
                 break
@@ -98,4 +114,5 @@ def main():
     env.close()
     Summary_Writer.close()
 
-
+if __name__ == '__main__':
+    main()
