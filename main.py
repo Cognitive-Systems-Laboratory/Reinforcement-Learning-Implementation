@@ -13,6 +13,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 from utils.replay_memory import ReplayBuffer
 from utils.save_tensorboard import *
+from utils.env_utils import make_video
 from models.dqn import Qnet
 
 
@@ -97,7 +98,7 @@ def main():
 
     env.close()
     Summary_Writer.close()
-
+    make_video(env,q)
 
 if __name__ == '__main__':
     main()
