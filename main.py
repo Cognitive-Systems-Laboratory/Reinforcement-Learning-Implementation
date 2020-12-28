@@ -99,3 +99,5 @@ def main():
     Summary_Writer.close()
 
 
+if __name__ == '__main__':
+    main()
