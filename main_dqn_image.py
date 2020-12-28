@@ -54,7 +54,7 @@ min_mem_size = config['min_mem_size']
 
 def main():
     env = gym.make('CartPole-v1')
-    Summary_Writer=mk_SummaryWriter("experiments",'DQN')
+    Summary_Writer=mk_SummaryWriter("experiments",'DQN_Image')
     q = Qnet().to(device)
     q_target = Qnet().to(device)
     q_target.load_state_dict(q.state_dict())
@@ -68,20 +68,25 @@ def main():
     for n_epi in range(n_episodes):
         epsilon = max(0.01, 0.08 - 0.01 * (n_epi / 200))  # Linear annealing from 8% to 1%
         s = env.reset()
+        s=env.render(mode='rgb_array')
+        s=preprocess(s)
         done = False
+        
+        #Use the Preprocessed Image: Simple Resizing and use the history
         height,width=100,150
         history_initial=torch.zeros(4,height,width)
+        history_initial=torch.cat((s.unsqueeze(0),history_initial[1:4]),0) 
+        
+        
         while not done:
             a = q.sample_action(history_initial.float().to(device).unsqueeze(0), epsilon)
 
             s_prime, r, done, info = env.step(a)
 
             s_image=env.render(mode='rgb_array')
-
-            s_image=preprocess( s_image)
+            #Use the Preprocess Image: Simple Resizing and Use Its's history
+            s_image=preprocess(s_image)
             history_new=torch.cat((s_image.unsqueeze(0),history_initial[1:4]),0)    
-            
-            
 
             done_mask = 0.0 if done else 1.0
             memory.put((history_initial, a, r / 100.0, history_new, done_mask))

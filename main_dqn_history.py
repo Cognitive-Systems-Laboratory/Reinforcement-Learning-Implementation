@@ -54,7 +54,7 @@ min_mem_size = config['min_mem_size']
 
 def main():
     env = gym.make('CartPole-v1')
-    Summary_Writer=mk_SummaryWriter("experiments",'DQN')
+    Summary_Writer=mk_SummaryWriter("experiments",'DQN_history')
     q = Qnet().to(device)
     q_target = Qnet().to(device)
     q_target.load_state_dict(q.state_dict())
@@ -69,9 +69,11 @@ def main():
         epsilon = max(0.01, 0.08 - 0.01 * (n_epi / 200))  # Linear annealing from 8% to 1%
         s = env.reset()
         done = False
-        history_initial=np.zeros(16,)
         
+        ####Stacks History
+        history_initial=np.zeros(16,)
         history_initial=np.concatenate((s, history_initial[0:12]))
+        
         while not done:
             a = q.sample_action(torch.from_numpy(history_initial).float().to(device), epsilon)
             s_prime, r, done, info = env.step(a)
